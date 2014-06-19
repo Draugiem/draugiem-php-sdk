@@ -23,16 +23,6 @@
  * If data of multiple users is returned, multiple user data items are placed in array
  * with user IDs as array keys.
  *
- *
- * Version history:
- * 1.2.6 (03-02-2014) - Fixed IE11 Cookie block
- * 1.2.5 (07-11-2013) - Fixed Safari cookie fix on Chrome browser
- * 1.2.4 (04-06-2012) - Added request handling and POST request option for apiCall method.
- * 1.2.3 (15-09-2010) - Added callback.html support for Javascript functions, changed JS_URL
- * 1.2.2 (21-07-2010) - Fixed http_build_query bug, removed short PHP open tags, fixed session cleanup
- * 1.2.1 (14-06-2010) - Added getOnlineFriends function
- * 1.2.0 (31-05-2010) - Many improvements for compatibility with iframe applications
- *
  * @copyright SIA Draugiem, 2014
  * @version 1.2.6
  */
