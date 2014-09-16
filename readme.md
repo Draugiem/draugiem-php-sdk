@@ -1,4 +1,4 @@
-### Draugiem.lv API library for PHP (v.1.2.6)
+### Draugiem.lv API library for PHP (v.1.3.2)
 
 To make application development faster and easier, we've created a PHP library that performs API calls and automatically converts the requested data to the PHP data structures.
 PHP library can be used both for integrated applications and draugiem.lv Passport applications.
