@@ -65,11 +65,11 @@ class DraugiemApi {
 	/**
 	 * Draugiem.lv passport login URL
 	 */
-	const LOGIN_URL = 'http://api.draugiem.lv/authorize/';
+	const LOGIN_URL = 'https://api.draugiem.lv/authorize/';
 	/**
 	 * Iframe scripts URL
 	 */
-	const JS_URL = 'http://ifrype.com/applications/external/draugiem.js';
+	const JS_URL = '//ifrype.com/applications/external/draugiem.js';
 
 	/**
 	 * Timeout in seconds for session_check requests
@@ -93,7 +93,7 @@ class DraugiemApi {
 	 * Load draugiem.lv user data and validate session.
 	 *
 	 * If session is new, makes API authorize request and loads user data, otherwise
-	 * gets user info stored in PHP session. Draugiem.lv session status is revalidated automatically
+	 * gets user info stored in PHP session. Draugiem.lv session status is re-validated automatically
 	 * by performing session_check requests in intervals specified by SESSION_CHECK_TIMEOUT constant.
 	 *
 	 * @return boolean Returns true on successful authorization or false on failure.
@@ -215,11 +215,10 @@ class DraugiemApi {
 		if($this->userApiKey && !$this->userInfo) { //We don't have user data, request
 			$this->userInfo = $this->getUserData();
 		}
-		if(isset($this->userInfo['uid'])){//We have user data, return uid
+		if(isset($this->userInfo['uid'])){
 			return $this->userInfo['uid'];
-		} else {
-			return false;
 		}
+		return false;
 	}
 
 
@@ -233,36 +232,37 @@ class DraugiemApi {
 	 * @param mixed $ids array of user IDs or a single user ID (this argument can also be false. In that case, user data of current user will be returned)
 	 * @return array Requested user data items or false if API request has failed
 	 */
-	public function getUserData ($ids = false){
-		if(is_array($ids)){//Array of IDs
-			$ids = implode(',', $ids);
-		} else {//Single ID
-			$return_single = true;
+	public function getUserData($ids = false){
+		$returnSingle = false;
 
-			if($this->userInfo && ($ids == $this->userInfo['uid'] || $ids === false)){//If we have userinfo of active user, return it immediately
+		if(is_array($ids)){ //Array of IDs
+			$ids = implode(',', $ids);
+		}else{
+			$returnSingle = true;
+
+			if($this->userInfo && ($ids == $this->userInfo['uid'] || $ids === false)){ //If we have userinfo of active user, return it immediately
 				return $this->userInfo;
 			}
 
-			if($ids!==false){
+			if($ids !== false){
 				$ids = (int)$ids;
 			}
 		}
 
-		$response = $this->apiCall('userdata', array('ids'=>$ids));
+		$response = $this->apiCall('userdata', array('ids' => $ids));
 		if($response){
 			$userData = $response['users'];
-			if(!empty($return_single)){//Single item requested
-				if(!empty($userData)){//Data received
+			if($returnSingle){ //Single item requested
+				if(!empty($userData)){ //Data received
 					return reset($userData);
-				} else {//Data not received
+				}else{ //Data not received
 					return false;
 				}
-			} else {//Multiple items requested
+			}else{ //Multiple items requested
 				return $userData;
 			}
-		} else {
-			return false;
 		}
+		return false;
 	}
 
 	/**
@@ -294,10 +294,7 @@ class DraugiemApi {
 	 */
 	public function checkFriendship($uid, $uid2 = false){
 		$response = $this->apiCall('check_friendship', array('uid' => $uid, 'uid2' => $uid2));
-		if(isset($response['status']) && $response['status'] == 'OK'){
-			return true;
-		}
-		return false;
+		return isset($response['status']) && $response['status'] == 'OK';
 	}
 
 	/**
@@ -375,15 +372,10 @@ class DraugiemApi {
 	/**
 	* Get list of all permissions, and if user has accepted them
 	*
-	* @return array List of all permissions with value 1 or 0 ( user has accepted that permission or not )
+	* @return array|bool List of all permissions with value 1 or 0 ( user has accepted that permission or not )
 	*/
 	public function getPermissions() {
-		$response = $this->apiCall('get_permissions');
-		if($response) {
-			return $response;
-		} else {
-			return false;
-		}
+		return $this->apiCall('get_permissions');
 	}
 
 	/**
@@ -393,7 +385,7 @@ class DraugiemApi {
 	 * @param integer $limit Number of users per page (min value 1, max value 100, default value 20)
 	 * @param boolean $in_app Whether to return friends that currently use app (true - online in app, false - online in portal)
 	 * @param boolean $return_ids Whether to return only user IDs or full profile information (true - IDs, false - full data)
-	 * @return array List of user data items/user IDs or false on failure
+	 * @return array|bool List of user data items/user IDs or false on failure
 	 */
 	public function getOnlineFriends($limit = 20, $in_app=false, $return_ids = false){
 		$response = $this->apiCall('app_friends_online', array( 'show'=>($return_ids?'ids':false), 'in_app'=>$in_app, 'limit'=>$limit ));
@@ -403,9 +395,8 @@ class DraugiemApi {
 			} else {
 				return $response['users'];
 			}
-		} else {
-			return false;
 		}
+		return false;
 	}
 
 	/**
@@ -445,9 +436,8 @@ class DraugiemApi {
 			} else {
 				return $response['users'];
 			}
-		} else {
-			return false;
 		}
+		return false;
 	}
 
 	/*
