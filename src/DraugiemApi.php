@@ -3,9 +3,6 @@
 /**
  * Draugiem.lv API library for PHP
  *
- * Version 1.2.6 (03-02-2014)
-
- *
  * Class for easier integration of your application with draugiem.lv API.
  * Supports both draugiem.lv Passport applications and iframe based applications.
  * All user data information returned in functions is returned in following format:
@@ -24,7 +21,7 @@
  * with user IDs as array keys.
  *
  * @copyright SIA Draugiem, 2014
- * @version 1.2.6
+ * @version 1.3.0 (2014-09-16)
  */
 class DraugiemApi {
 
@@ -102,80 +99,92 @@ class DraugiemApi {
 	 * @return boolean Returns true on successful authorization or false on failure.
 	 */
 	public function getSession(){
-		if(session_id()==''){//If no session exists, start new
+		if(session_id() == ''){ //If no session exists, start new
 			session_start();
 		}
-		if(isset($_GET['dr_auth_status']) && $_GET['dr_auth_status']!='ok'){
+
+		if(isset($_GET['dr_auth_status']) && $_GET['dr_auth_status'] != 'ok'){
 			$this->clearSession();
-		} elseif(isset($_GET['dr_auth_code']) && (empty($_SESSION['draugiem_auth_code']) ||
-			$_GET['dr_auth_code'] != $_SESSION['draugiem_auth_code'])){// New session authorization
+		}elseif(isset($_GET['dr_auth_code']) && (!$this->sessionFetch('draugiem_auth_code') || ($_GET['dr_auth_code'] != $this->sessionFetch('draugiem_auth_code')))){ // New session authorization
 
 			$this->clearSession(); //Delete current session data to prevent overwriting of existing session
 
 			//Get authorization data
-			$response = $this->apiCall('authorize', array('code'=>$_GET['dr_auth_code']));
+			$response = $this->apiCall('authorize', array('code' => $_GET['dr_auth_code']));
 
-			if($response && isset($response['apikey'])){//API key received
+			if($response && isset($response['apikey'])){ //API key received
 				//User profile info
 				$userData = reset($response['users']);
 
 				if(!empty($userData)){
-					if(!empty($_GET['session_hash'])){//Internal application, store session key to recheck if draugiem.lv session is active
-						$_SESSION['draugiem_lastcheck'] = time();
-						$this->sessionKey = $_SESSION['draugiem_session'] = $_GET['session_hash'];
-						if(isset($_GET['domain'])){//Domain for JS actions
-							$_SESSION['draugiem_domain'] = preg_replace('/[^a-z0-9\.]/','',$_GET['domain']);
+					if(!empty($_GET['session_hash'])){ //Internal application, store session key to recheck if draugiem.lv session is active
+
+						$this->sessionPut('draugiem_lastcheck', time());
+
+						$this->sessionPut('draugiem_session', $_GET['session_hash']);
+						$this->sessionKey = $_GET['session_hash'];
+
+						if(isset($_GET['domain'])){ //Domain for JS actions
+							$this->setSessionDomain($_GET['domain']);
 						}
-						if(!empty($response['inviter'])){//Fill invitation info if any
-							$_SESSION['draugiem_invite'] = array(
+
+						if(!empty($response['inviter'])){ //Fill invitation info if any
+							$this->sessionPut('draugiem_invite', array(
 								'inviter' => (int)$response['inviter'],
 								'extra' => isset($response['invite_extra']) ? $response['invite_extra'] : false,
-							);
+							));
 						}
 					}
 
-					$_SESSION['draugiem_auth_code'] = $_GET['dr_auth_code'];
+					$this->sessionPut('draugiem_auth_code', $_GET['dr_auth_code']);
 
-					//User API key
-					$this->userApiKey = $_SESSION['draugiem_userkey'] = $response['apikey'];
-					//User language
-					$_SESSION['draugiem_language'] = $response['language'];
-					//Profile info
-					$this->userInfo = $_SESSION['draugiem_user'] = $userData;
+					// User API key
+					$this->userApiKey = $response['apikey'];
+					$this->sessionPut('draugiem_userkey',$response['apikey']);
 
-					return true;//Authorization OK
+					// User language
+					$this->sessionPut('draugiem_language', $response['language']);
+
+					// Profile info
+					$this->userInfo = $userData;
+					$this->sessionPut('draugiem_user', $userData);
+
+					return true;
 				}
 			}
 
-		}elseif(isset($_SESSION['draugiem_user'])){//Existing session
+		}elseif($this->sessionFetch('draugiem_user')){ //Existing session
 
+			// Load data from session
+			$this->userApiKey = $this->sessionFetch('draugiem_userkey');
+			$this->userInfo = $this->sessionFetch('draugiem_user');
 
-			//Load data from session
-			$this->userApiKey = $_SESSION['draugiem_userkey'];
-			$this->userInfo = $_SESSION['draugiem_user'];
+			if($this->sessionFetch('draugiem_lastcheck') && $this->sessionFetch('draugiem_session')){ //Iframe app session
 
-			if(isset($_SESSION['draugiem_lastcheck'], $_SESSION['draugiem_session'])){ //Iframe app session
-
-				if(isset($_GET['dr_auth_code'], $_GET['domain'])){//Fix session domain if changed
-					$_SESSION['draugiem_domain'] = preg_replace('/[^a-z0-9\.]/','',$_GET['domain']);
+				if(isset($_GET['dr_auth_code'], $_GET['domain'])){ //Fix session domain if changed
+					$this->setSessionDomain($_GET['domain']);
 				}
 
-				$this->sessionKey = $_SESSION['draugiem_session'];
-				//Session check timeout not reached yet, do not check session
-				if($_SESSION['draugiem_lastcheck'] > time() - self::SESSION_CHECK_TIMEOUT){
+				$this->sessionKey = $this->sessionFetch('draugiem_session');
+
+				// Session check timeout not reached yet, do not check session
+				if($this->sessionFetch('draugiem_lastcheck') > (time() - self::SESSION_CHECK_TIMEOUT)){
 					return true;
-				} else {//Session check timeout reached, recheck draugiem.lv session status
-					$response = $this->apiCall('session_check', array('hash'=>$this->sessionKey));
-					if(!empty($response['status']) && $response['status'] == 'OK'){
-						$_SESSION['draugiem_lastcheck'] = time();
-						return true;
-					}
 				}
-			} else {
+
+				// Session check timeout reached, recheck draugiem.lv session status
+				$response = $this->apiCall('session_check', array('hash' => $this->sessionKey));
+
+				if(!empty($response['status']) && $response['status'] == 'OK'){
+					$this->sessionPut('draugiem_lastcheck', time());
+					return true;
+				}
+
+			}else{
 				return true;
 			}
 		}
-		return false; //failure
+		return false;
 	}
 
 	/**
@@ -193,7 +202,7 @@ class DraugiemApi {
 	 * @return string Two letter country code (lv/ru/en/de/hu/lt)
 	 */
 	public function getUserLanguage(){
-		return isset($_SESSION['draugiem_language']) ? $_SESSION['draugiem_language'] : 'lv';
+		return $this->sessionFetch('draugiem_language', 'lv');
 	}
 
 	/**
@@ -491,7 +500,11 @@ class DraugiemApi {
 	 * @return string Draugiem.lv domain name that is currently used by application user
 	 */
 	public function getSessionDomain(){
-		return isset($_SESSION['draugiem_domain']) ? $_SESSION['draugiem_domain'] : 'www.draugiem.lv';
+		return $this->sessionFetch('draugiem_domain', 'www.draugiem.lv');
+	}
+
+	private function setSessionDomain($domain){
+		$this->sessionPut('draugiem_domain', preg_replace('/[^a-z0-9\.]/', '', $domain));
 	}
 
 	/**
@@ -506,7 +519,7 @@ class DraugiemApi {
 	 * @return array Invitation info or false if no invitation has been accepted.
 	 */
 	public function getInviteInfo(){
-		return isset($_SESSION['draugiem_invite']) ? $_SESSION['draugiem_invite'] : false;
+		return $this->sessionFetch('draugiem_invite', false);
 	}
 
 	/**
@@ -531,7 +544,7 @@ class DraugiemApi {
 		if($resize_container){
 			$data.= " var draugiem_container='$resize_container';\n";
 		}
-		if(!empty($_SESSION['draugiem_domain'])){
+		if($this->getSessionDomain()){
 			$data.= " var draugiem_domain='".$this->getSessionDomain()."';\n";
 		}
 		if($callback_html){
@@ -721,12 +734,12 @@ class DraugiemApi {
 
 		$response = unserialize($response);
 
-		if(empty($response)){//Empty response
+		if(empty($response)){
 			$this->lastError = 2;
 			$this->lastErrorDescription = 'Empty API response';
 			return false;
 		} else {
-			if(isset($response['error'])){//API error, fill error attributes
+			if(isset($response['error'])){
 				$this->lastError = $response['error']['code'];
 				$this->lastErrorDescription = 'API error: '.$response['error']['description'];
 				return false;
@@ -737,16 +750,32 @@ class DraugiemApi {
 	}
 
 	private function clearSession(){
-			unset(
-				$_SESSION['draugiem_auth_code'],
-				$_SESSION['draugiem_session'],
-				$_SESSION['draugiem_userkey'],
-				$_SESSION['draugiem_user'],
-				$_SESSION['draugiem_lastcheck'],
-				$_SESSION['draugiem_language'],
-				$_SESSION['draugiem_domain'],
-				$_SESSION['draugiem_invite']
-			);
+		$this->sessionRemove('draugiem_auth_code');
+		$this->sessionRemove('draugiem_session');
+		$this->sessionRemove('draugiem_userkey');
+		$this->sessionRemove('draugiem_user');
+		$this->sessionRemove('draugiem_lastcheck');
+		$this->sessionRemove('draugiem_language');
+		$this->sessionRemove('draugiem_domain');
+		$this->sessionRemove('draugiem_invite');
+	}
+
+	/*
+	|-----------------------------------------------------------------------------
+	| Session mechanism functions. Override if needed for specific frameworks, etc
+	|-----------------------------------------------------------------------------
+	*/
+
+	protected function sessionFetch($key, $default = null){
+		return isset($_SESSION[$key]) ? $_SESSION[$key] : $default;
+	}
+
+	protected function sessionPut($key, $value){
+		$_SESSION[$key] = $value;
+	}
+
+	protected function sessionRemove($key){
+		unset($_SESSION[$key]);
 	}
 }
 
