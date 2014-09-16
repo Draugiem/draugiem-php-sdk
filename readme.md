@@ -1,5 +1,9 @@
 ### Draugiem.lv API library for PHP (v.1.3.2)
 
+[![Latest Stable Version](https://poser.pugx.org/understand/understand-laravel/v/stable.svg)](https://packagist.org/packages/draugiem/draugiem-php-sdk)
+[![Latest Unstable Version](https://poser.pugx.org/understand/understand-laravel/v/unstable.svg)](https://packagist.org/packages/draugiem/draugiem-php-sdk)
+[![License](https://poser.pugx.org/understand/understand-laravel/license.svg)](https://packagist.org/packages/draugiem/draugiem-php-sdk)
+
 To make application development faster and easier, we've created a PHP library that performs API calls and automatically converts the requested data to the PHP data structures.
 PHP library can be used both for integrated applications and draugiem.lv Passport applications.
 
@@ -26,5 +30,20 @@ if ($session) {
 	$user = $draugiem->getUserData(); //Get user info
 }
 ```
+
+Usage with composer
+----
+
+1. Add this package to your composer.json
+
+    ```php
+    "draugiem/draugiem-php-sdk": "1.*"
+    ```
+
+2. Update composer.json packages
+
+    ```
+    composer update
+    ```
 
 [examples]: /examples/test_application.php
