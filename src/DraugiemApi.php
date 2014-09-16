@@ -21,7 +21,7 @@
  * with user IDs as array keys.
  *
  * @copyright SIA Draugiem, 2014
- * @version 1.3.0 (2014-09-16)
+ * @version 1.3.1 (2014-09-16)
  */
 class DraugiemApi {
 
@@ -99,9 +99,7 @@ class DraugiemApi {
 	 * @return boolean Returns true on successful authorization or false on failure.
 	 */
 	public function getSession(){
-		if(session_id() == ''){ //If no session exists, start new
-			session_start();
-		}
+		$this->sessionStart();
 
 		if(isset($_GET['dr_auth_status']) && $_GET['dr_auth_status'] != 'ok'){
 			$this->clearSession();
@@ -766,16 +764,40 @@ class DraugiemApi {
 	|-----------------------------------------------------------------------------
 	*/
 
+	/**
+	 * Get value from session
+	 * @param string $key
+	 * @param mixed|null $default Default value to return, if no value exists
+	 * @return mixed
+	 */
 	protected function sessionFetch($key, $default = null){
 		return isset($_SESSION[$key]) ? $_SESSION[$key] : $default;
 	}
 
+	/**
+	 * Store value in session
+	 * @param string $key
+	 * @param mixed $value
+	 */
 	protected function sessionPut($key, $value){
 		$_SESSION[$key] = $value;
 	}
 
+	/**
+	 * Unset value from session
+	 * @param $key
+	 */
 	protected function sessionRemove($key){
 		unset($_SESSION[$key]);
+	}
+
+	/**
+	 * Begin session (if not stated already)
+	 */
+	protected function sessionStart(){
+		if(session_id() == ''){
+			session_start();
+		}
 	}
 }
 
