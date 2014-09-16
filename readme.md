@@ -1,4 +1,4 @@
-### Draugiem.lv API library for PHP (v.1.3.2)
+### Draugiem.lv API library for PHP
 
 [![Latest Stable Version](https://poser.pugx.org/draugiem/draugiem-php-sdk/v/stable.svg)](https://packagist.org/packages/draugiem/draugiem-php-sdk)
 [![Latest Unstable Version](https://poser.pugx.org/draugiem/draugiem-php-sdk/v/unstable.svg)](https://packagist.org/packages/draugiem/draugiem-php-sdk)
