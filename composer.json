@@ -1,0 +1,16 @@
+{
+	"name" : "Draugiem/draugiem-php-sdk",
+	"description" : "Draugiem.lv API PHP library",
+	"keywords" : ["draugiem", "api", "library", "draugiem.lv", "php"],
+	"authors" : [
+		{
+			"name" : "draugiem.lv"
+		}
+	],
+	"require" : {
+		"php" : ">=5.3.0"
+	},
+	"autoload" : {
+		"files" : ["src/DraugiemApi.php"]
+	}
+}
