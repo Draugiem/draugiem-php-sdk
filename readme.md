@@ -37,7 +37,7 @@ Usage with composer
 1. Add this package to your composer.json
 
     ```php
-    "draugiem/draugiem-php-sdk": "1.*"
+    "draugiem/draugiem-php-sdk": "1.3.*"
     ```
 
 2. Update composer.json packages
