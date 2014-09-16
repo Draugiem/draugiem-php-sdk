@@ -1,5 +1,6 @@
 Version history:
 
+1.3.2 (16-09-2014) - Added composer support
 1.3.2 (16-09-2014) - Refactoring (extracted methods for managing $_GET, $_SESSION, for easier overriding
 1.2.6 (03-02-2014) - Fixed IE11 Cookie block
 1.2.5 (07-11-2013) - Fixed Safari cookie fix on Chrome browser
