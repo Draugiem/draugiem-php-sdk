@@ -46,4 +46,10 @@ Usage with composer
     composer update
     ```
 
+3. Use library as shown in [examples]
+
+    ```php
+    $draugiem = new DraugiemApi( 'YOUR_APP_ID', 'YOUR_APP_KEY' );
+    ```
+
 [examples]: /examples/test_application.php
