@@ -1,5 +1,5 @@
 {
-	"name" : "Draugiem/draugiem-php-sdk",
+	"name" : "draugiem/draugiem-php-sdk",
 	"description" : "Draugiem.lv API PHP library",
 	"keywords" : ["draugiem", "api", "library", "draugiem.lv", "php"],
 	"authors" : [
