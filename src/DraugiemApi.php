@@ -21,7 +21,7 @@
  * with user IDs as array keys.
  *
  * @copyright SIA Draugiem, 2014
- * @version 1.3.2 (2014-09-16)
+ * @version 1.3.3 (2014-09-16)
  */
 class DraugiemApi {
 
