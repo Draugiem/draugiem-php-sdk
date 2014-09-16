@@ -21,7 +21,7 @@
  * with user IDs as array keys.
  *
  * @copyright SIA Draugiem, 2014
- * @version 1.3.1 (2014-09-16)
+ * @version 1.3.2 (2014-09-16)
  */
 class DraugiemApi {
 
@@ -101,29 +101,31 @@ class DraugiemApi {
 	public function getSession(){
 		$this->sessionStart();
 
-		if(isset($_GET['dr_auth_status']) && $_GET['dr_auth_status'] != 'ok'){
+		if($this->queryGet('dr_auth_status') && $this->queryGet('dr_auth_status') != 'ok'){
 			$this->clearSession();
-		}elseif(isset($_GET['dr_auth_code']) && (!$this->sessionFetch('draugiem_auth_code') || ($_GET['dr_auth_code'] != $this->sessionFetch('draugiem_auth_code')))){ // New session authorization
+		}elseif($this->queryGet('dr_auth_code') && (!$this->sessionFetch('draugiem_auth_code') || ($this->queryGet('dr_auth_code') != $this->sessionFetch('draugiem_auth_code')))){ // New session authorization
 
 			$this->clearSession(); //Delete current session data to prevent overwriting of existing session
 
 			//Get authorization data
-			$response = $this->apiCall('authorize', array('code' => $_GET['dr_auth_code']));
+			$response = $this->apiCall('authorize', array(
+				'code' => $this->queryGet('dr_auth_code')
+			));
 
 			if($response && isset($response['apikey'])){ //API key received
 				//User profile info
 				$userData = reset($response['users']);
 
 				if(!empty($userData)){
-					if(!empty($_GET['session_hash'])){ //Internal application, store session key to recheck if draugiem.lv session is active
+					if($this->queryGet('session_hash')){ //Internal application, store session key to recheck if draugiem.lv session is active
 
 						$this->sessionPut('draugiem_lastcheck', time());
 
-						$this->sessionPut('draugiem_session', $_GET['session_hash']);
-						$this->sessionKey = $_GET['session_hash'];
+						$this->sessionPut('draugiem_session', $this->queryGet('session_hash'));
+						$this->sessionKey = $this->queryGet('session_hash');
 
-						if(isset($_GET['domain'])){ //Domain for JS actions
-							$this->setSessionDomain($_GET['domain']);
+						if($this->queryGet('domain')){ //Domain for JS actions
+							$this->setSessionDomain($this->queryGet('domain'));
 						}
 
 						if(!empty($response['inviter'])){ //Fill invitation info if any
@@ -134,7 +136,7 @@ class DraugiemApi {
 						}
 					}
 
-					$this->sessionPut('draugiem_auth_code', $_GET['dr_auth_code']);
+					$this->sessionPut('draugiem_auth_code', $this->queryGet('dr_auth_code'));
 
 					// User API key
 					$this->userApiKey = $response['apikey'];
@@ -159,8 +161,9 @@ class DraugiemApi {
 
 			if($this->sessionFetch('draugiem_lastcheck') && $this->sessionFetch('draugiem_session')){ //Iframe app session
 
-				if(isset($_GET['dr_auth_code'], $_GET['domain'])){ //Fix session domain if changed
-					$this->setSessionDomain($_GET['domain']);
+				if($this->queryGet('dr_auth_code') && $this->queryGet('domain')){
+					 // Fix session domain if changed
+					$this->setSessionDomain($this->queryGet('domain'));
 				}
 
 				$this->sessionKey = $this->sessionFetch('draugiem_session');
@@ -559,39 +562,49 @@ class DraugiemApi {
 	 */
 	public function cookieFix(){
 
-		$agent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? $_SERVER['HTTP_USER_AGENT'] : '';
+		$agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
 
-		// MSIE cookie block: http://stackoverflow.com/questions/389456/ (jāsūta katru reizi, kad setosim cepumu uz IE6/7/8/11 caur iFrame)
-		if( strpos($agent, 'MSIE') || ( strpos($agent, 'rv:11') && strpos($agent, 'like Gecko') ) ){
+		// IE cookie fix (http://stackoverflow.com/questions/389456/ (Must be sent every time))
+		if(strpos($agent, 'MSIE') || (strpos($agent, 'rv:11') && strpos($agent, 'like Gecko'))){
 			header('P3P:CP="IDC DSP COR ADM DEVi TAIi PSA PSD IVAi IVDi CONi HIS OUR IND CNT"');
 		}
 
-		$isSafariBrowser = strpos( $agent, 'Safari' ) !== false && strpos( $agent, 'Chrome' ) === false;
+		$isSafariBrowser = strpos($agent, 'Safari') !== false && strpos($agent, 'Chrome') === false;
+		$sessionCookieExists = !empty($_COOKIE[$this->sessionGetCookieName()]);
 
-		// Safari cookie unlocker
-		if ( empty( $_COOKIE[session_name()] ) && $isSafariBrowser
-			&& isset($_GET['dr_auth_code']) && ! isset($_GET['dr_cookie_fix']) ) {
+		// Safari cookie fix
+		if(!$sessionCookieExists && $isSafariBrowser && $this->queryGet('dr_auth_code') && !$this->queryGet('dr_cookie_fix')){
 
-			echo '<html><head>
-			<script type="text/javascript">
-			window.onload = function() {
-				fix();
+			$formAction = '?' . http_build_query($this->queryGetAll());
+			$formInputs = '';
+			foreach($this->postGetAll() as $k => $v){
+				$formInputs .= '<input type="hidden" name="' . htmlspecialchars($k) . '" value="' . htmlspecialchars($v) . '">';
 			}
-			function fix() {
-				var w = window.open("/callback.html");
-				w.onload=function() {
-				 w.document.cookie="safari_fix=1; path=/";
-				 w.close();
-				 document.getElementById("fixLink").innerHTML = "Loading...";
-				 document.getElementById("fixForm").submit();
-				};
-			};
-			</script>
-			</head><body>'.PHP_EOL;
-			echo '<form id="fixForm" method="post" action="?'.http_build_query($_GET).'">'.PHP_EOL;
-			foreach ($_POST as $k=>$v) echo '<input type="hidden" name="'.htmlspecialchars($k).'" value="'.htmlspecialchars($v).'" />'.PHP_EOL;
-			echo '<div id="fixLink"><input type="button" onclick="javascript:fix();" value="Enable Safari cookies" /></div>'.PHP_EOL;
-			echo '</body></html>';
+			
+			echo "
+			<html>
+				<head>
+					<script type='text/javascript'>
+						window.onload = function() {
+							fix();
+						};
+						function fix() {
+							var w = window.open('/callback.html');
+							w.onload = function() {
+								w.document.cookie = 'safari_fix=1; path=/';
+								w.close();
+								document.getElementById('fixLink').innerHTML = 'Loading...';
+								document.getElementById('fixForm').submit();
+							};
+						}
+					</script>
+				</head>
+				<body>
+					<form id='fixForm' method='post' action='{$formAction}'>{$formInputs}</form>
+					<div id='fixLink'><input type='button' onclick='fix();' value='Enable Safari cookies'/></div>
+				</body>
+			</html>
+			";
 			exit;
 		}
 	}
@@ -798,6 +811,38 @@ class DraugiemApi {
 		if(session_id() == ''){
 			session_start();
 		}
+	}
+
+	/**
+	 * Get session name (cookie name for session)
+	 * @return string
+	 */
+	protected function sessionGetCookieName(){
+		return session_name();
+	}
+
+	/**
+	 * Get a value from query string ($_GET)
+	 * @param string $key
+	 * @param mixed $default Default value
+	 * @return string
+	 */
+	protected function queryGet($key, $default = null){
+		return isset($_GET[$key]) ? $_GET[$key] : $default;
+	}
+
+	/**
+	 * @return array Whole $_GET array
+	 */
+	protected function queryGetAll(){
+		return $_GET;
+	}
+
+	/**
+	 * @return array Whole $_POST data array
+	 */
+	protected function postGetAll(){
+		return $_POST;
 	}
 }
 
