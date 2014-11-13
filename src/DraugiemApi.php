@@ -750,7 +750,7 @@ class DraugiemApi {
 		}
 	}
 
-	private function clearSession(){
+	public function clearSession(){
 		$this->sessionRemove('draugiem_auth_code');
 		$this->sessionRemove('draugiem_session');
 		$this->sessionRemove('draugiem_userkey');
