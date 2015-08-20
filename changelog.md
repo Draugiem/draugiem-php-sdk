@@ -1,6 +1,8 @@
 Change log
 ----
 
+1.3.6 (17-08-2015) - Added Draugiem ID login button with example
+
 1.3.5 (13-11-2014) - clearSession as public method
 
 1.3.4 (16-09-2014) - Refactor

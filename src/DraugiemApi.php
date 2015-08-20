@@ -20,8 +20,8 @@
  * If data of multiple users is returned, multiple user data items are placed in array
  * with user IDs as array keys.
  *
- * @copyright SIA Draugiem, 2014
- * @version 1.3.3 (2014-09-16)
+ * @copyright SIA Draugiem, 2015
+ * @version 1.3.6 (2015-08-17)
  */
 class DraugiemApi {
 
@@ -442,18 +442,18 @@ class DraugiemApi {
 
 	/*
 	|--------------------------------------------------------------------------
-	| Draugiem.lv passport functions
+	| Draugiem.lv passport and Draugiem ID functions
 	|--------------------------------------------------------------------------
 	*/
 
 	/**
-	 * Get URL for Draugiem.lv Passport login page to authenticate user
+	 * Get URL for Draugiem.lv Passport or Draugiem ID login page to authenticate user
 	 *
 	 * @param string $redirect_url URL where user has to be redirected after authorization. The URL has to be in the same domain as URL that has been set in the properties of the application.
-	 * @return string URL of Draugiem.lv Passport login page
+	 * @return string URL of Draugiem.lv Passport or Draugiem ID login page
 	 */
 	public function getLoginURL($redirect_url){
-		$hash = md5($this->appKey . $redirect_url); //Request checksum
+		$hash = md5($this->appKey . $redirect_url); // Request checksum
 		$link = self::LOGIN_URL . '?app=' . $this->appId . '&hash=' . $hash . '&redirect=' . urlencode($redirect_url);
 		return $link;
 	}
@@ -475,6 +475,25 @@ class DraugiemApi {
 			$onclick = '';
 		}
 		return '<a href="' . $url . '"' . $onclick . '><img border="0" src="http://api.draugiem.lv/authorize/login_button.png" alt="draugiem.lv" /></a>';
+	}
+
+	/**
+	 * Get HTML for Draugiem.lv Draugiem ID login button
+	 *
+	 * @param string $redirect_url URL where user has to be redirected after authorization. The URL has to be in the same domain as URL that has been set in the properties of the application.
+	 * @param boolean $popup Whether to open authorization page within a popup window (true - popup, false - same window).
+	 * @return string HTML of Draugiem ID login button
+	 */
+	public function getDraugiemIDButton($redirect_url, $popup = true){
+		$url = htmlspecialchars($this->getLoginUrl($redirect_url));
+
+		if($popup){
+			$js = "if(handle=window.open('$url&amp;popup=1','Dr_{$this->appId}' ,'width=400, height=400, left='+(screen.width?(screen.width-400)/2:0)+', top='+(screen.height?(screen.height-400)/2:0)+',scrollbars=no')){handle.focus();return false;}";
+			$onclick = ' onclick="' . $js . '"';
+		}else{
+			$onclick = '';
+		}
+		return '<a href="' . $url . '"' . $onclick . '><img border="0" width="148" height="32" src="//api.draugiem.lv/authorize/draugiem_id.svg" onerror="this.src=\'//api.draugiem.lv/authorize/draugiem_id\'+ (window.devicePixelRatio >= 2 ? \'@2x\' : \'\') +\'.png\'; this.onerror=null;" alt="Draugiem ID" /></a>';
 	}
 
 	/*

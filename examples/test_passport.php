@@ -47,9 +47,11 @@ if($session && !empty($_GET['dr_auth_code'])){//New session, check if we are not
 		exit;
 }
 
-?><html>
+?><!DOCTYPE html>
+<html>
 	<head>
 		<title>Draugiem Passport test</title>
+		<meta charset="utf-8">
 	</head>
 	<body>
 <?php

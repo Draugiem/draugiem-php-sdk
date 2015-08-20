@@ -21,9 +21,11 @@ if($session){//Authentication successful
 
 	$user = $draugiem->getUserData();//Get user info
 
-?><html>
+?><!DOCTYPE html>
+<html>
 	<head>
 		<title>Draugiem API test</title>
+		<meta charset="utf-8">
 <?php
 			echo $draugiem->getJavascript('body', 'http://'.$_SERVER['SERVER_NAME'].dirname($_SERVER['PHP_SELF']).'/callback.html'); //Set up JS API + iframe Resize
 ?>
