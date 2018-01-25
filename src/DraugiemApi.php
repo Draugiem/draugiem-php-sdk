@@ -61,7 +61,7 @@ class DraugiemApi {
 	/**
 	 * Draugiem.lv API URL
 	 */
-	const API_URL = 'http://api.draugiem.lv/php/';
+	const API_URL = 'https://api.draugiem.lv/php/';
 	/**
 	 * Draugiem.lv passport login URL
 	 */
