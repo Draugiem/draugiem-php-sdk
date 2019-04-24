@@ -1,5 +1,6 @@
 Change log
 ----
+1.3.7 (24-04-2019) - Use CURL first for API GET calls
 
 1.3.6 (17-08-2015) - Added Draugiem ID login button with example
 

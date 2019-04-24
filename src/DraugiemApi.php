@@ -20,8 +20,8 @@
  * If data of multiple users is returned, multiple user data items are placed in array
  * with user IDs as array keys.
  *
- * @copyright SIA Draugiem, 2015
- * @version 1.3.6 (2015-08-17)
+ * @copyright SIA Draugiem, 2019
+ * @version 1.3.7 (2019-04-24)
  */
 class DraugiemApi {
 
@@ -711,9 +711,7 @@ class DraugiemApi {
 
 		$response = false;
 
-		if(ini_get('allow_url_fopen') == 1){
-			$response = @file_get_contents($url);//Get API response (@ to avoid accidentaly displaying API keys in case of errors)
-		}elseif(function_exists('curl_init')){
+		if(function_exists('curl_init')){
 			$ch = curl_init();
 			$timeout = 5;
 			curl_setopt($ch,CURLOPT_URL,$url);
@@ -721,29 +719,31 @@ class DraugiemApi {
 			curl_setopt($ch,CURLOPT_CONNECTTIMEOUT,$timeout);
 			$response = curl_exec($ch);
 			curl_close($ch);
+		}elseif(ini_get('allow_url_fopen') == 1){
+			$response = @file_get_contents($url);//Get API response (@ to avoid accidentaly displaying API keys in case of errors)
 		}else{
-            $parts = parse_url($url);
-            $target = $parts['host'];
-            $port = 80;
+			$parts = parse_url($url);
+			$target = $parts['host'];
+			$port = 80;
 
-            $page    = isset($parts['path'])        ? $parts['path']            : '';
-            $page   .= isset($parts['query'])       ? '?' . $parts['query']     : '';
-            $page   .= isset($parts['fragment'])    ? '#' . $parts['fragment']  : '';
-            $page    = ($page == '')                ? '/'                       : $page;
-            if($fp = fsockopen($target, $port, $errno, $errstr, 30))
-            {
-                $headers  = "GET $page HTTP/1.1\r\n";
-                $headers .= "Host: {$parts['host']}\r\n";
-                $headers .= "Connection: Close\r\n\r\n";
-                if(fwrite($fp, $headers)){
-                    $response = '';
+			$page    = isset($parts['path'])        ? $parts['path']            : '';
+			$page   .= isset($parts['query'])       ? '?' . $parts['query']     : '';
+			$page   .= isset($parts['fragment'])    ? '#' . $parts['fragment']  : '';
+			$page    = ($page == '')                ? '/'                       : $page;
+			if($fp = fsockopen($target, $port, $errno, $errstr, 30))
+			{
+				$headers  = "GET $page HTTP/1.1\r\n";
+				$headers .= "Host: {$parts['host']}\r\n";
+				$headers .= "Connection: Close\r\n\r\n";
+				if(fwrite($fp, $headers)){
+					$response = '';
 					while (!feof($fp)) {
 						$response .= fgets($fp, 128);
 					}
 					$response = substr($response, stripos($response, 'a:'));
-                }
-                fclose($fp);
-            }
+				}
+				fclose($fp);
+			}
 		}
 
 		if($response === false){//Request failed
